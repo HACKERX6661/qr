@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="de" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kostenloser QR-Code Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans antialiased min-h-full flex flex-col justify-between bg-slate-950 text-slate-200">
+
+    <!-- Header Section -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-brand-600 rounded-xl text-white shadow-lg shadow-brand-500/20">
+                    <i data-lucide="qr-code" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-tight">QR-Code Studio</h1>
+                    <p class="text-xs text-slate-400">Erstelle & erstelle deine QR-Codes kostenlos</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    100% Kostenlos & Lokal
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
+        
+        <!-- Toast Notification Area -->
+        <div id="toast" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none">
+            <div class="flex items-center gap-2 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl">
+                <i id="toast-icon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+                <span id="toast-msg" class="text-sm font-medium">Benachrichtigung</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Controls / Input Form (8 cols on large screens) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Input Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="text-cursor-input" class="w-5 h-5 text-brand-500"></i>
+                        1. Inhalt eingeben
+                    </h2>
+                    <div>
+                        <label for="text-input" class="block text-sm font-medium text-slate-300 mb-2">Webseite URL oder beliebiger Text</label>
+                        <textarea id="text-input" rows="3" class="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all resize-none" placeholder="https://beispiel.de oder dein Text..."></textarea>
+                        <div class="flex justify-between items-center mt-2 text-xs text-slate-400">
+                            <span>Wird automatisch generiert</span>
+                            <span id="char-count">0 Zeichen</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customization Options Card -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-5 h-5 text-brand-500"></i>
+                        2. Anpassen & Design
+                    </h2>
+
+                    <!-- Colors Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Foreground Color -->
+                        <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
+                            <label for="fg-color" class="block text-sm font-medium text-slate-300">Vordergrundfarbe (QR-Muster)</label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" id="fg-color" value="#000000" class="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0">
+                                <input type="text" id="fg-color-text" value="#000000" class="uppercase font-mono w-24 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-center text-white focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Background Color -->
+                        <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
+                            <label for="bg-color" class="block text-sm font-medium text-slate-300">Hintergrundfarbe</label>
+                            <div class="flex items-center gap-3">
+                                <input type="color" id="bg-color" value="#ffffff" class="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0">
+                                <input type="text" id="bg-color-text" value="#ffffff" class="uppercase font-mono w-24 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-center text-white focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Size Slider -->
+                    <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label for="size-slider" class="text-sm font-medium text-slate-300">Auflösung / Größe</label>
+                            <span id="size-val" class="font-mono text-xs px-2 py-1 bg-slate-800 rounded text-brand-500 font-bold">256 x 256 px</span>
+                        </div>
+                        <input type="range" id="size-slider" min="128" max="1024" step="32" value="256" class="w-full accent-brand-500 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span>128px</span>
+                            <span>512px</span>
+                            <span>1024px</span>
+                        </div>
+                    </div>
+
+                    <!-- Error Correction -->
+                    <div class="p-4 bg-slate-950 border border-slate-800 rounded-xl space-y-2">
+                        <label for="ecc-level" class="block text-sm font-medium text-slate-300">Fehlerkorrekturlevel (ECC)</label>
+                        <select id="ecc-level" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="L">L - Niedrig (~7% Korrektur)</option>
+                            <option value="M" selected>M - Mittel (~15% Korrektur)</option>
+                            <option value="Q">Q - Quartil (~25% Korrektur)</option>
+                            <option value="H">H - Hoch (~30% Korrektur)</option>
+                        </select>
+                        <p class="text-xs text-slate-400 mt-1">Höhere Stufen machen den QR-Code robuster gegen Beschädigungen, erhöhen aber die Dichte.</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Preview & Download Section (5 cols on large screens) -->
+            <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center">
+                    <h2 class="text-lg font-semibold text-white mb-6 w-full flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="eye" class="w-5 h-5 text-brand-500"></i>
+                            Vorschau
+                        </span>
+                        <span class="text-xs font-normal text-slate-400">Live-Aktualisierung</span>
+                    </h2>
+
+                    <!-- QR Display Box -->
+                    <div class="relative p-6 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-center max-w-full overflow-hidden min-h-[280px] w-full group">
+                        <div id="qrcode-container" class="flex justify-center items-center shadow-md transition-transform duration-200 group-hover:scale-[1.02]">
+                            <!-- QRCode.js populates canvas/img here -->
+                        </div>
+                        
+                        <!-- Empty Overlay if Input is empty -->
+                        <div id="empty-state" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 text-center">
+                            <i data-lucide="qr-code" class="w-12 h-12 text-slate-600 mb-2"></i>
+                            <p class="text-sm font-medium text-slate-400">Gib oben einen Text oder eine URL ein, um den QR-Code zu erstellen.</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="w-full mt-6 space-y-3">
+                        <button id="download-png-btn" class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white font-semibold rounded-xl shadow-lg shadow-brand-500/25 transition-all">
+                            <i data-lucide="download" class="w-5 h-5"></i>
+                            PNG herunterladen
+                        </button>
+                        
+                        <button id="download-svg-btn" class="w-full flex items-center justify-center gap-2 px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition-all">
+                            <i data-lucide="file-code" class="w-5 h-5"></i>
+                            SVG herunterladen
+                        </button>
+
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <button id="copy-btn" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-slate-300 text-sm font-medium rounded-xl border border-slate-800 transition-all">
+                                <i data-lucide="copy" class="w-4 h-4"></i>
+                                Bild kopieren
+                            </button>
+                            <button id="reset-btn" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-slate-300 text-sm font-medium rounded-xl border border-slate-800 transition-all">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                Zurücksetzen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="p-4 bg-slate-900/50 border border-slate-800/80 rounded-xl text-xs text-slate-400 space-y-2">
+                    <div class="flex items-center gap-1.5 font-medium text-slate-300">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                        Datenschutz garantiert
+                    </div>
+                    <p>Deine eingegebenen Daten bleiben vollständig in deinem Browser. Es werden keine Daten an externe Server übertragen.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-400">
+        <p>&copy; <span id="year"></span> QR-Code Studio. Kostenlos & Open-Source Client-Lösung.</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set Current Year
+            document.getElementById('year').textContent = new Date().getFullYear();
+
+            // Initialize Lucide Icons
+            lucide.createIcons();
+
+            // DOM Elements
+            const textInput = document.getElementById('text-input');
+            const charCount = document.getElementById('char-count');
+            const fgColorInput = document.getElementById('fg-color');
+            const fgColorText = document.getElementById('fg-color-text');
+            const bgColorInput = document.getElementById('bg-color');
+            const bgColorText = document.getElementById('bg-color-text');
+            const sizeSlider = document.getElementById('size-slider');
+            const sizeVal = document.getElementById('size-val');
+            const eccSelect = document.getElementById('ecc-level');
+            const qrContainer = document.getElementById('qrcode-container');
+            const emptyState = document.getElementById('empty-state');
+            
+            const downloadPngBtn = document.getElementById('download-png-btn');
+            const downloadSvgBtn = document.getElementById('download-svg-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            const resetBtn = document.getElementById('reset-btn');
+
+            let qrCodeInstance = null;
+
+            // Default values
+            const DEFAULT_TEXT = 'https://google.de';
+            textInput.value = DEFAULT_TEXT;
+
+            // Mapping for QRCode Correction Level
+            const eccMapping = {
+                'L': QRCode.CorrectLevel.L,
+                'M': QRCode.CorrectLevel.M,
+                'Q': QRCode.CorrectLevel.Q,
+                'H': QRCode.CorrectLevel.H
+            };
+
+            // Function to Toast notification
+            function showToast(message, isSuccess = true) {
+                const toast = document.getElementById('toast');
+                const toastMsg = document.getElementById('toast-msg');
+                const toastIcon = document.getElementById('toast-icon');
+
+                toastMsg.textContent = message;
+                if(isSuccess) {
+                    toastIcon.setAttribute('data-lucide', 'check-circle');
+                    toastIcon.className = "w-5 h-5 text-emerald-400";
+                } else {
+                    toastIcon.setAttribute('data-lucide', 'alert-circle');
+                    toastIcon.className = "w-5 h-5 text-rose-400";
+                }
+                lucide.createIcons();
+
+                toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+                
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                }, 3000);
+            }
+
+            // Generate QR Code Function
+            function generateQRCode() {
+                const text = textInput.value.trim();
+                charCount.textContent = `${text.length} Zeichen`;
+
+                if (!text) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                emptyState.classList.add('hidden');
+
+                const size = parseInt(sizeSlider.value, 10);
+                const fgColor = fgColorInput.value;
+                const bgColor = bgColorInput.value;
+                const eccLevel = eccMapping[eccSelect.value] || QRCode.CorrectLevel.M;
+
+                // Clear previous QR code
+                qrContainer.innerHTML = '';
+
+                try {
+                    qrCodeInstance = new QRCode(qrContainer, {
+                        text: text,
+                        width: size,
+                        height: size,
+                        colorDark: fgColor,
+                        colorLight: bgColor,
+                        correctLevel: eccLevel
+                    });
+                } catch (e) {
+                    console.error("Fehler beim Erstellen des QR-Codes:", e);
+                }
+            }
+
+            // Sync color picker with text inputs
+            function syncColorInputs(picker, textInputEl) {
+                textInputEl.value = picker.value.toUpperCase();
+            }
+
+            fgColorInput.addEventListener('input', (e) => {
+                syncColorInputs(e.target, fgColorText);
+                generateQRCode();
+            });
+
+            fgColorText.addEventListener('change', (e) => {
+                let val = e.target.value.trim();
+                if (!val.startsWith('#')) val = '#' + val;
+                if (/^#[0-9A-F]{6}$/i.test(val)) {
+                    fgColorInput.value = val;
+                    generateQRCode();
+                } else {
+                    fgColorText.value = fgColorInput.value.toUpperCase();
+                }
+            });
+
+            bgColorInput.addEventListener('input', (e) => {
+                syncColorInputs(e.target, bgColorText);
+                generateQRCode();
+            });
+
+            bgColorText.addEventListener('change', (e) => {
+                let val = e.target.value.trim();
+                if (!val.startsWith('#')) val = '#' + val;
+                if (/^#[0-9A-F]{6}$/i.test(val)) {
+                    bgColorInput.value = val;
+                    generateQRCode();
+                } else {
+                    bgColorText.value = bgColorInput.value.toUpperCase();
+                }
+            });
+
+            // Slider Listener
+            sizeSlider.addEventListener('input', (e) => {
+                const sz = e.target.value;
+                sizeVal.textContent = `${sz} x ${sz} px`;
+                generateQRCode();
+            });
+
+            // Input Event Listeners
+            textInput.addEventListener('input', generateQRCode);
+            eccSelect.addEventListener('change', generateQRCode);
+
+            // Download PNG
+            downloadPngBtn.addEventListener('click', () => {
+                const img = qrContainer.querySelector('img');
+                const canvas = qrContainer.querySelector('canvas');
+
+                let imageURI = null;
+                if (canvas) {
+                    imageURI = canvas.toDataURL("image/png");
+                } else if (img && img.src) {
+                    imageURI = img.src;
+                }
+
+                if (!imageURI) {
+                    showToast("Kein QR-Code zum Herunterladen vorhanden.", false);
+                    return;
+                }
+
+                const link = document.createElement('a');
+                link.download = `qrcode_${Date.now()}.png`;
+                link.href = imageURI;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("PNG erfolgreich heruntergeladen!");
+            });
+
+            // Download Vector/SVG (Generated manually from canvas data or library fallback)
+            downloadSvgBtn.addEventListener('click', () => {
+                const canvas = qrContainer.querySelector('canvas');
+                if (!canvas) {
+                    showToast("Fehler beim Generieren des SVG.", false);
+                    return;
+                }
+
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+                const imgData = ctx.getImageData(0, 0, width, height);
+                const data = imgData.data;
+
+                // Simple SVG Generator from Canvas pixels
+                let svgPaths = '';
+                const fgHex = fgColorInput.value;
+                const bgHex = bgColorInput.value;
+
+                // Create SVG rects for pixel matching dark color
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const index = (y * width + x) * 4;
+                        const r = data[index];
+                        const g = data[index + 1];
+                        const b = data[index + 2];
+                        const alpha = data[index + 3];
+
+                        // Convert color to check if non-white/dark pixel
+                        if (alpha > 0) {
+                            const isDark = (r + g + b) / 3 < 128;
+                            if (isDark) {
+                                svgPaths += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fgHex}" />`;
+                            }
+                        }
+                    }
+                }
+
+                const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+                    <rect width="${width}" height="${height}" fill="${bgHex}"/>
+                    ${svgPaths}
+                </svg>`;
+
+                const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = `qrcode_${Date.now()}.svg`;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showToast("SVG Vektorgrafik heruntergeladen!");
+            });
+
+            // Copy Image to Clipboard
+            copyBtn.addEventListener('click', async () => {
+                const canvas = qrContainer.querySelector('canvas');
+                if (!canvas) {
+                    showToast("Kein QR-Code zum Kopieren vorhanden.", false);
+                    return;
+                }
+
+                try {
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) {
+                            showToast("Fehler beim Erstellen des Bildes.", false);
+                            return;
+                        }
+                        try {
+                            const item = new ClipboardItem({ 'image/png': blob });
+                            await navigator.clipboard.write([item]);
+                            showToast("QR-Code in die Zwischenablage kopiert!");
+                        } catch (err) {
+                            // ExecCommand fallback for restricted iframe environment
+                            showToast("Zwischenablage-Zugriff eingeschränkt.", false);
+                        }
+                    });
+                } catch (err) {
+                    showToast("Fehler beim Kopieren des Bildes.", false);
+                }
+            });
+
+            // Reset Button
+            resetBtn.addEventListener('click', () => {
+                textInput.value = DEFAULT_TEXT;
+                fgColorInput.value = '#000000';
+                fgColorText.value = '#000000';
+                bgColorInput.value = '#ffffff';
+                bgColorText.value = '#ffffff';
+                sizeSlider.value = 256;
+                sizeVal.textContent = '256 x 256 px';
+                eccSelect.value = 'M';
+                generateQRCode();
+                showToast("Einstellungen zurückgesetzt.");
+            });
+
+            // Initial Generation
+            generateQRCode();
+        });
+    </script>
+</body>
+</html>
